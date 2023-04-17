@@ -17,6 +17,9 @@ class Detector:
         # init detector and visualizer
         self.model = init_detector(config_file, checkpoint_file, device=device)
         self.visualizer = DetLocalVisualizer()
+    
+    def __del__(self):
+        self.camera.release()
 
     def open_video(self, file_path):
         assert file_path is not None
