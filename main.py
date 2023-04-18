@@ -1,3 +1,4 @@
+import argparse
 import sys
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5 import QtCore
@@ -8,11 +9,11 @@ from detector import Detector
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, *args, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
         # detector
-        self.detector = Detector()
+        self.detector = Detector(*args)
         # qt gui
         self.timer = QtCore.QTimer(self) # 定时器，用于播放视频
         self.timer.timeout.connect(self.refreshFrame)
@@ -52,8 +53,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
 def main():
+    parser = argparse.ArgumentParser(description='video detector args')
+    parser.add_argument('config', type=str)
+    parser.add_argument('checkpoint', type=str)
+    parser.add_argument('device', type=str)
+    args = parser.parse_args()
+    # print(args)
+
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = MainWindow(args.config, args.checkpoint, args.device)
     window.show()
     sys.exit(app.exec_())
     

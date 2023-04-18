@@ -8,18 +8,16 @@ from mmdet.visualization import DetLocalVisualizer
 
 
 class Detector:
-    def __init__(self):
-        # 指定模型的配置文件和 checkpoint 文件路径
-        config_file = 'configs/rtmdet_tiny_8xb32-300e_coco.py'
-        checkpoint_file = 'checkpoints/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth'
-        device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-
+    def __init__(self, config, checkpoint, device):
         # init detector and visualizer
-        self.model = init_detector(config_file, checkpoint_file, device=device)
+        self.model = init_detector(config, checkpoint, device=device)
         self.visualizer = DetLocalVisualizer()
+        # label's real name
+        self.visualizer.dataset_meta = self.model.dataset_meta
     
     def __del__(self):
-        self.camera.release()
+        if self.camera is not None:
+            self.camera.release()
 
     def open_video(self, file_path):
         assert file_path is not None
