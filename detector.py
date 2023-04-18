@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 import cv2
 
@@ -30,25 +29,38 @@ class Detector:
 
     def read_video(self) -> np.ndarray:
         frame = self.video.read()
-        if frame is None:
-            raise Exception('Fail to read video!')
         return frame
 
     def read_camera(self) -> np.ndarray:
         _, frame = self.camera.read()
-        if frame is None:
-            raise Exception('Fail to read camera!')
         return frame
+
+    def set_score_thr(self, thr):
+        # TODO:设置让visualizer只显示>=thr的bboxes
+        pass
+
+    def gen_obj_list(self, results):
+        labels = results.get('pred_instances')['labels'].cpu().data.numpy()
+        scores = results.get('pred_instances')['scores'].cpu().data.numpy()
+        bboxes = results.get('pred_instances')['bboxes'].cpu().data.numpy()
+        classes = self.model.dataset_meta['classes']  # need to change
+        objects = []
+        for i, label_id in enumerate(labels):
+            label_txt = classes[label_id]
+            objects.append((label_txt, scores[i], bboxes[i]))
+        return objects
 
     def detect(self):
         """ This function will read a frame and detect objects.
-            It will finally return a ndarray.
         Returns:
-            _type_: numpy.ndarray
+            It will finally return a img(ndarray) and object list.
+            _type_: numpy.ndarray, List
         """
         frame = self.read_video() if self.detec_video else self.read_camera()
+        if frame is None:
+            return None, None
 
-        results = inference_detector(self.model, frame)
+        results = inference_detector(self.model, frame) 
         self.visualizer.add_datasample(
             name='video_detector',
             image=frame,
@@ -57,5 +69,6 @@ class Detector:
             show=False
         )
         res_img = self.visualizer.get_image()
-        return res_img
-        
+        objects = self.gen_obj_list(results)
+        return res_img, objects
+    

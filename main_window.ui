@@ -90,6 +90,48 @@
          </layout>
         </item>
         <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
+          <item>
+           <spacer name="horizontalSpacer_9">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="open_camera_btn">
+            <property name="font">
+             <font>
+              <family>思源黑体 CN</family>
+             </font>
+            </property>
+            <property name="text">
+             <string>打开摄像头</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_8">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
          <layout class="QVBoxLayout" name="config_vl">
           <property name="bottomMargin">
            <number>20</number>
@@ -135,12 +177,12 @@
                </font>
               </property>
               <property name="text">
-               <string>IOU 阈值：</string>
+               <string>Score 阈值：</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QDoubleSpinBox" name="iou_value">
+             <widget class="QDoubleSpinBox" name="score_value">
               <property name="font">
                <font>
                 <family>思源黑体 CN</family>
@@ -296,10 +338,32 @@
            </layout>
           </item>
           <item>
-           <widget class="QTextBrowser" name="results_show">
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <item>
+             <widget class="QLabel" name="label_3">
+              <property name="font">
+               <font>
+                <family>思源黑体 CN</family>
+               </font>
+              </property>
+              <property name="text">
+               <string>类别：Score</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QListView" name="result_show">
             <property name="font">
              <font>
               <family>思源黑体 CN</family>
+              <pointsize>16</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
              </font>
             </property>
            </widget>
