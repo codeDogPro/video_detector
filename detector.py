@@ -13,6 +13,10 @@ class Detector:
         self.visualizer = DetLocalVisualizer()
         # label's real name
         self.visualizer.dataset_meta = self.model.dataset_meta
+
+        self._counter = 0 # 计数器
+        self._result = None # 保存上一次检测结果
+        self._objects = None # 保存上一次的所有对象
     
     def __del__(self):
         if self.camera is not None:
@@ -60,15 +64,18 @@ class Detector:
         if frame is None:
             return None, None
 
-        results = inference_detector(self.model, frame) 
+        # 两帧检测一次，提高速度
+        if self._counter % 2 == 0:
+            self._result = inference_detector(self.model, frame) 
+            self._objects = self.gen_obj_list(self._result)
+
         self.visualizer.add_datasample(
             name='video_detector',
             image=frame,
-            data_sample=results,
+            data_sample=self._result,
             draw_gt=False,
             show=False
         )
         res_img = self.visualizer.get_image()
-        objects = self.gen_obj_list(results)
-        return res_img, objects
-    
+        return res_img, self._objects
+
