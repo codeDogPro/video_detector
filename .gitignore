@@ -1,5 +1,6 @@
 *.pth
 *.pyc
 .vscode
+.idea
 *.mp4
 *.jpg
