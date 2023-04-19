@@ -63,6 +63,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 show_list.append(f'{obj[0]:10} : {obj[1]:.2}')
         self.slm.setStringList(show_list)
         self.result_show.setModel(self.slm)
+        self.num_lb.setText(f'{len(show_list)} / {len(objects)}')
         
     def refreshFrame(self):
         # 没必要这样优化，两帧一样的看起来也卡，所以没必要
