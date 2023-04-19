@@ -14,9 +14,10 @@ class Detector:
         # label's real name
         self.visualizer.dataset_meta = self.model.dataset_meta
 
+        self.camera, self.video = None, None
+        self.detec_video = False
+        self._result, self._objects = None, None # 保存上一次检测结果和对象
         self._counter = 0 # 计数器
-        self._result = None # 保存上一次检测结果
-        self._objects = None # 保存上一次的所有对象
     
     def __del__(self):
         if self.camera is not None:
@@ -31,13 +32,15 @@ class Detector:
         self.camera = cv2.VideoCapture(camera_id)
         self.detec_video = False
 
-    def read_video(self) -> np.ndarray:
-        frame = self.video.read()
+    def read_video(self):
+        frame = self.video.read() if self.video is not None else None
         return frame
 
-    def read_camera(self) -> np.ndarray:
-        _, frame = self.camera.read()
-        return frame
+    def read_camera(self):
+        if self.camera is not None:
+            _, frame = self.camera.read()
+            return frame
+        return None
 
     def set_score_thr(self, thr):
         # TODO:设置让visualizer只显示>=thr的bboxes
@@ -47,7 +50,7 @@ class Detector:
         labels = results.get('pred_instances')['labels'].cpu().data.numpy()
         scores = results.get('pred_instances')['scores'].cpu().data.numpy()
         bboxes = results.get('pred_instances')['bboxes'].cpu().data.numpy()
-        classes = self.model.dataset_meta['classes']  # need to change
+        classes = self.model.dataset_meta['classes']  # type: ignore 
         objects = []
         for i, label_id in enumerate(labels):
             label_txt = classes[label_id]
@@ -77,5 +80,6 @@ class Detector:
             show=False
         )
         res_img = self.visualizer.get_image()
+
         return res_img, self._objects
 

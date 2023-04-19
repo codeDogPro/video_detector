@@ -15,7 +15,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # detector
         self.detector = Detector(*args)
         # qt gui
-        self.counter = 0
         self.slm = QtCore.QStringListModel()
         self.timer = QtCore.QTimer(self) # 定时器，用于播放视频
         self.timer.timeout.connect(self.refreshFrame)
@@ -66,16 +65,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.num_lb.setText(f'{len(show_list)} / {len(objects)}')
         
     def refreshFrame(self):
-        # 没必要这样优化，两帧一样的看起来也卡，所以没必要
-        if self.counter % 2 == 0:
-            res_img, objects = self.detector.detect()
-            if res_img is None:
-                self.pauseVideo()
-                return 
+        res_img, objects = self.detector.detect()
+        if res_img is None:
+            self.pauseVideo()
+            return 
 
-            self.update_img(res_img)
-            self.update_objects(objects)
-        self.counter += 1
+        self.update_img(res_img)
+        self.update_objects(objects)
 
 
 def main():
@@ -84,7 +80,6 @@ def main():
     parser.add_argument('checkpoint', type=str)
     parser.add_argument('device', type=str)
     args = parser.parse_args()
-    # print(args)
 
     app = QApplication(sys.argv)
     window = MainWindow(args.config, args.checkpoint, args.device)
