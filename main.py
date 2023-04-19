@@ -55,7 +55,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label.setPixmap(QPixmap.fromImage(q_image))
     
     def update_objects(self, objects):
-        score_thr = self.score_value.value()
+        score_thr = self.detector.score_thr
         show_list = []
         for obj in objects:
             if obj[1] >= score_thr:
@@ -65,6 +65,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.num_lb.setText(f'{len(show_list)} / {len(objects)}')
         
     def refreshFrame(self):
+        self.detector.score_thr = self.score_value.value()
         res_img, objects = self.detector.detect()
         if res_img is None:
             self.pauseVideo()
