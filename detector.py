@@ -17,6 +17,8 @@ class Detector:
         self.detec_video = False
         self._result, self._objects = None, None # 保存上一次检测结果和对象
         self._counter = 0 # 计数器
+
+        self.score_thr = 0.3
     
     def __del__(self):
         if self.camera is not None:
@@ -40,10 +42,6 @@ class Detector:
             _, frame = self.camera.read()
             return frame
         return None
-
-    def set_score_thr(self, thr):
-        # TODO:设置让visualizer只显示>=thr的bboxes
-        pass
 
     def gen_obj_list(self, results):
         labels = results.get('pred_instances')['labels'].cpu().data.numpy()
@@ -76,7 +74,8 @@ class Detector:
             image=frame,
             data_sample=self._result,
             draw_gt=False,
-            show=False
+            show=False,
+            pred_score_thr=self.score_thr,
         )
         res_img = self.visualizer.get_image()
 
