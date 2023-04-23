@@ -5,7 +5,7 @@ model = dict(
         mean=[123.675, 116.28, 103.53],
         std=[58.395, 57.12, 57.375],
         bgr_to_rgb=True,
-        pad_size_divisor=32),
+        pad_size_divisor=64),
     backbone=dict(
         type='ResNet',
         depth=50,
@@ -17,10 +17,22 @@ model = dict(
         style='pytorch',
         init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
     neck=dict(
-        type='FPN',
+        type='FPN_CARAFE',
         in_channels=[256, 512, 1024, 2048],
         out_channels=256,
-        num_outs=5),
+        num_outs=5,
+        start_level=0,
+        end_level=-1,
+        norm_cfg=None,
+        act_cfg=None,
+        order=('conv', 'norm', 'act'),
+        upsample_cfg=dict(
+            type='carafe',
+            up_kernel=5,
+            up_group=1,
+            encoder_kernel=3,
+            encoder_dilation=1,
+            compressed_channels=64)),
     rpn_head=dict(
         type='RPNHead',
         in_channels=256,
@@ -49,7 +61,7 @@ model = dict(
             in_channels=256,
             fc_out_channels=1024,
             roi_feat_size=7,
-            num_classes=601,
+            num_classes=80,
             bbox_coder=dict(
                 type='DeltaXYWHBBoxCoder',
                 target_means=[0.0, 0.0, 0.0, 0.0],
@@ -107,121 +119,107 @@ model = dict(
             score_thr=0.05,
             nms=dict(type='nms', iou_threshold=0.5),
             max_per_img=100)))
-dataset_type = 'OpenImagesDataset'
-data_root = 'data/OpenImages/'
+dataset_type = 'CocoDataset'
+data_root = 'data/coco/'
 backend_args = None
 train_pipeline = [
     dict(type='LoadImageFromFile', backend_args=None),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', scale=(1024, 800), keep_ratio=True),
+    dict(type='Resize', scale=(1333, 800), keep_ratio=True),
     dict(type='RandomFlip', prob=0.5),
     dict(type='PackDetInputs')
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile', backend_args=None),
-    dict(type='Resize', scale=(1024, 800), keep_ratio=True),
+    dict(type='Resize', scale=(1333, 800), keep_ratio=True),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor', 'instances', 'image_level_labels'))
+                   'scale_factor'))
 ]
 train_dataloader = dict(
     batch_size=2,
-    num_workers=0,
-    persistent_workers=False,
-    sampler=dict(type='ClassAwareSampler', num_sample_class=1),
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
     batch_sampler=dict(type='AspectRatioBatchSampler'),
     dataset=dict(
-        type='OpenImagesDataset',
-        data_root='data/OpenImages/',
-        ann_file='annotations/oidv6-train-annotations-bbox.csv',
-        data_prefix=dict(img='OpenImages/train/'),
-        label_file='annotations/class-descriptions-boxable.csv',
-        hierarchy_file='annotations/bbox_labels_600_hierarchy.json',
-        meta_file='annotations/train-image-metas.pkl',
+        type='CocoDataset',
+        data_root='data/coco/',
+        ann_file='annotations/instances_train2017.json',
+        data_prefix=dict(img='train2017/'),
+        filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=[
             dict(type='LoadImageFromFile', backend_args=None),
             dict(type='LoadAnnotations', with_bbox=True),
-            dict(type='Resize', scale=(1024, 800), keep_ratio=True),
+            dict(type='Resize', scale=(1333, 800), keep_ratio=True),
             dict(type='RandomFlip', prob=0.5),
             dict(type='PackDetInputs')
         ],
         backend_args=None))
 val_dataloader = dict(
     batch_size=1,
-    num_workers=0,
-    persistent_workers=False,
+    num_workers=2,
+    persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
-        type='OpenImagesDataset',
-        data_root='data/OpenImages/',
-        ann_file='annotations/validation-annotations-bbox.csv',
-        data_prefix=dict(img='OpenImages/validation/'),
-        label_file='annotations/class-descriptions-boxable.csv',
-        hierarchy_file='annotations/bbox_labels_600_hierarchy.json',
-        meta_file='annotations/validation-image-metas.pkl',
-        image_level_ann_file=
-        'annotations/validation-annotations-human-imagelabels-boxable.csv',
+        type='CocoDataset',
+        data_root='data/coco/',
+        ann_file='annotations/instances_val2017.json',
+        data_prefix=dict(img='val2017/'),
+        test_mode=True,
         pipeline=[
             dict(type='LoadImageFromFile', backend_args=None),
-            dict(type='Resize', scale=(1024, 800), keep_ratio=True),
+            dict(type='Resize', scale=(1333, 800), keep_ratio=True),
             dict(type='LoadAnnotations', with_bbox=True),
             dict(
                 type='PackDetInputs',
                 meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                           'scale_factor', 'instances', 'image_level_labels'))
+                           'scale_factor'))
         ],
         backend_args=None))
 test_dataloader = dict(
     batch_size=1,
-    num_workers=0,
-    persistent_workers=False,
+    num_workers=2,
+    persistent_workers=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
-        type='OpenImagesDataset',
-        data_root='data/OpenImages/',
-        ann_file='annotations/validation-annotations-bbox.csv',
-        data_prefix=dict(img='OpenImages/validation/'),
-        label_file='annotations/class-descriptions-boxable.csv',
-        hierarchy_file='annotations/bbox_labels_600_hierarchy.json',
-        meta_file='annotations/validation-image-metas.pkl',
-        image_level_ann_file=
-        'annotations/validation-annotations-human-imagelabels-boxable.csv',
+        type='CocoDataset',
+        data_root='data/coco/',
+        ann_file='annotations/instances_val2017.json',
+        data_prefix=dict(img='val2017/'),
+        test_mode=True,
         pipeline=[
             dict(type='LoadImageFromFile', backend_args=None),
-            dict(type='Resize', scale=(1024, 800), keep_ratio=True),
+            dict(type='Resize', scale=(1333, 800), keep_ratio=True),
             dict(type='LoadAnnotations', with_bbox=True),
             dict(
                 type='PackDetInputs',
                 meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                           'scale_factor', 'instances', 'image_level_labels'))
+                           'scale_factor'))
         ],
         backend_args=None))
 val_evaluator = dict(
-    type='OpenImagesMetric',
-    iou_thrs=0.5,
-    ioa_thrs=0.5,
-    use_group_of=True,
-    get_supercategory=True)
+    type='CocoMetric',
+    ann_file='data/coco/annotations/instances_val2017.json',
+    metric='bbox',
+    format_only=False,
+    backend_args=None)
 test_evaluator = dict(
-    type='OpenImagesMetric',
-    iou_thrs=0.5,
-    ioa_thrs=0.5,
-    use_group_of=True,
-    get_supercategory=True)
+    type='CocoMetric',
+    ann_file='data/coco/annotations/instances_val2017.json',
+    metric='bbox',
+    format_only=False,
+    backend_args=None)
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=12, val_interval=1)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 param_scheduler = [
     dict(
-        type='LinearLR',
-        start_factor=0.015625,
-        by_epoch=False,
-        begin=0,
-        end=26000),
+        type='LinearLR', start_factor=0.001, by_epoch=False, begin=0, end=500),
     dict(
         type='MultiStepLR',
         begin=0,
@@ -232,9 +230,8 @@ param_scheduler = [
 ]
 optim_wrapper = dict(
     type='OptimWrapper',
-    optimizer=dict(type='SGD', lr=0.08, momentum=0.9, weight_decay=0.0001),
-    clip_grad=dict(max_norm=35, norm_type=2))
-auto_scale_lr = dict(enable=False, base_batch_size=64)
+    optimizer=dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001))
+auto_scale_lr = dict(enable=False, base_batch_size=16)
 default_scope = 'mmdet'
 default_hooks = dict(
     timer=dict(type='IterTimerHook'),
